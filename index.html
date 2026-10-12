@@ -81,6 +81,18 @@
   .flotante { position: fixed; left: 16px; right: 16px; bottom: max(14px, env(safe-area-inset-bottom));
               max-width: 528px; margin: 0 auto; display: none; }
   .flotante .boton { background: var(--rojo); color: #fff; margin: 0; }
+  .antiguo { display: block; text-align: center; margin-top: 12px; color: #fff; font-size: 14px;
+             text-decoration: underline; opacity: .95; }
+  .ayuda { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 18px; overflow: hidden; }
+  .ayuda details { border-bottom: 1px solid var(--borde); }
+  .ayuda details:last-child { border-bottom: 0; }
+  .ayuda summary { padding: 14px 16px; font-weight: 700; cursor: pointer; list-style: none; display: flex; gap: 10px; align-items: center; }
+  .ayuda summary::-webkit-details-marker { display: none; }
+  .ayuda summary::after { content: '›'; margin-left: auto; color: var(--gris); font-size: 20px; transition: transform .2s; }
+  .ayuda details[open] summary::after { transform: rotate(90deg); }
+  .ayuda .cuerpo { padding: 0 16px 14px 16px; color: var(--gris); font-size: 14px; line-height: 1.5; }
+  .ayuda .cuerpo b { color: var(--texto); }
+  .ayuda .cuerpo a { color: var(--rojo); font-weight: 700; }
   @media (max-width: 360px) { .grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -102,6 +114,7 @@
     </div>
     <a class="boton" id="descargar" href="#">⬇&nbsp; Descargar e instalar</a>
     <div class="nota" id="notaDescarga">Se descarga un archivo .apk. Sigue los 3 pasos de abajo.</div>
+    <a class="antiguo" id="descargar32" href="#">¿Celular antiguo o te dice “No se instaló”? Descarga esta otra versión</a>
   </div>
 </header>
 
@@ -121,6 +134,36 @@
       <b>Instala y entra</b>
       <span>Toca <b>Instalar</b>. Si aparece Play Protect, toca <b>“Más detalles” → “Instalar de todas formas”</b> (pasa porque la app es familiar y no está en Play Store).</span>
     </div></div>
+  </div>
+
+  <h2>¿DICE “NO SE INSTALÓ”?</h2>
+  <div class="ayuda">
+    <details>
+      <summary>📱 1. Prueba la versión para celulares antiguos</summary>
+      <div class="cuerpo">Algunos celulares (antiguos o económicos) no aceptan la versión normal.
+        <a id="descargar32b" href="#">Descarga aquí la versión para celulares antiguos</a> e instálala igual.</div>
+    </details>
+    <details>
+      <summary>🔓 2. Permite instalar desde Chrome o WhatsApp</summary>
+      <div class="cuerpo">Ve a <b>Ajustes → Aplicaciones → Chrome</b> (o WhatsApp, según desde dónde lo bajaste)
+        <b>→ Instalar apps desconocidas → Permitir</b>. Luego vuelve a abrir el archivo descargado.</div>
+    </details>
+    <details>
+      <summary>🛡️ 3. Play Protect la está bloqueando</summary>
+      <div class="cuerpo">Si sale el aviso de Play Protect, toca <b>“Más detalles” → “Instalar de todas formas”</b>.
+        Si no aparece esa opción: abre <b>Play Store → tu foto (arriba) → Play Protect → ⚙️</b> y desactiva un momento
+        <b>“Analizar apps con Play Protect”</b>. Instala la app y luego vuelve a activarlo.</div>
+    </details>
+    <details>
+      <summary>♻️ 4. Ya tenías una versión antigua</summary>
+      <div class="cuerpo">Desinstala la app anterior (mantén presionado el ícono → <b>Desinstalar</b>) y vuelve a instalar.
+        <b>No pierdes nada</b>: tus datos están guardados en la nube; solo vuelves a entrar con tu usuario.</div>
+    </details>
+    <details>
+      <summary>💾 5. Falta espacio o la descarga quedó a medias</summary>
+      <div class="cuerpo">Revisa que tengas al menos <b>200 MB libres</b>. Borra el archivo descargado
+        (en <b>Archivos → Descargas</b>) y vuelve a descargarlo con buena señal o Wi-Fi.</div>
+    </details>
   </div>
 
   <h2>QUÉ PUEDES HACER</h2>
@@ -154,8 +197,10 @@
   // ================== CONFIGURACIÓN ==================
   // Enlace del APK (Google Drive o el que uses). Si configuras Supabase
   // abajo, se toma automático de la tabla app_version (url_apk).
-  var APK_URL = 'https://drive.google.com/file/d/1r0z1Ef9pg_u90IG5tbGQB6VXtrYBD3Gs/view?usp=sharing';
-  var VERSION = '4.0.0';
+  // Los instaladores viven en GitHub Releases (siempre la última versión).
+  var APK_URL = 'https://github.com/SIGAMEF/appfmarroquin/releases/latest/download/AppFMarroquin.apk';
+  var APK_URL_32 = 'https://github.com/SIGAMEF/appfmarroquin/releases/latest/download/AppFMarroquin-32bits.apk';
+  var VERSION = '';
   // Opcional: leer la última versión de Supabase (anon key = la pública de la app)
   var SUPABASE_URL = 'https://pmfutajljncuhtdlhmdg.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtZnV0YWpsam5jdWh0ZGxobWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3OTM1OTMsImV4cCI6MjEwNDM2OTU5M30.7MhBNoRc-fduN-8ZGvhnUT2PUm2B2QWSRFZFRc4x6Tw'; // pega aquí tu anon key para que se actualice solo
@@ -171,7 +216,12 @@
     return url;
   }
 
-  function aplicar(url, version) {
+  function aplicar(url, version, url32) {
+    var u32 = descargaDirecta(url32 || APK_URL_32);
+    ['descargar32', 'descargar32b'].forEach(function (id) {
+      var a = document.getElementById(id);
+      if (a) a.href = u32;
+    });
     var u = descargaDirecta(url);
     ['descargar', 'descargar2'].forEach(function (id) {
       var a = document.getElementById(id);
@@ -192,7 +242,7 @@
       var f = filas && filas[0];
       if (!f) return;
       var v = f.version_name || f.version || (f.version_code ? ('build ' + f.version_code) : null);
-      aplicar(f.url_apk || APK_URL, v || VERSION);
+      aplicar(f.url_apk || APK_URL, v || VERSION, f.url_apk_32 || APK_URL_32);
     }).catch(function () {});
   }
 

@@ -35,20 +35,41 @@
     <p>Cuando termine, toca la descarga y luego <b>Instalar</b>.</p>
     <p>Si Android pregunta, elige <b>“Permitir de esta fuente”</b> y si aparece Play Protect, <b>“Instalar de todas formas”</b>.</p>
     <a class="b" id="b" href="#">⬇ Descargar de nuevo</a>
-    <small><a href="./">Ver instrucciones con imágenes</a></small>
+    <small><a id="b32" href="#">¿Celular antiguo o dice “No se instaló”? Descarga esta otra versión</a></small>
+    <small><a href="./">Ver ayuda e instrucciones</a></small>
   </div>
 <script>
-  // Mismo enlace que en index.html (Drive "compartir" sirve: se convierte solo)
-  var APK_URL = 'https://drive.google.com/file/d/1r0z1Ef9pg_u90IG5tbGQB6VXtrYBD3Gs/view?usp=sharing';
+  // El enlace del APK se toma de Supabase (tabla app_version, columna url_apk):
+  // así solo lo cambias en UN lugar. Este de abajo es solo por si falla.
+  var APK_URL = 'https://github.com/SIGAMEF/appfmarroquin/releases/latest/download/AppFMarroquin.apk';
+  var APK_URL_32 = 'https://github.com/SIGAMEF/appfmarroquin/releases/latest/download/AppFMarroquin-32bits.apk';
+  document.getElementById('b32').href = APK_URL_32;
+  var SUPABASE_URL = 'https://pmfutajljncuhtdlhmdg.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtZnV0YWpsam5jdWh0ZGxobWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3OTM1OTMsImV4cCI6MjEwNDM2OTU5M30.7MhBNoRc-fduN-8ZGvhnUT2PUm2B2QWSRFZFRc4x6Tw';
+
   function directo(u) {
     var m = u.match(/drive\.google\.com\/file\/d\/([^/?#]+)/) || u.match(/[?&]id=([^&#]+)/);
     return (m && u.indexOf('drive.google.com') >= 0)
       ? 'https://drive.google.com/uc?export=download&id=' + m[1] : u;
   }
-  var url = directo(APK_URL);
-  document.getElementById('b').href = url;
-  // inicia la descarga sola al abrir el enlace
-  setTimeout(function () { window.location.href = url; }, 700);
+  var yaFue = false;
+  function descargar(u) {
+    if (yaFue) return;
+    yaFue = true;
+    var url = directo(u);
+    document.getElementById('b').href = url;
+    window.location.href = url;
+  }
+  // 1) intenta leer el enlace de Supabase; 2) si tarda más de 3 s, usa el de arriba
+  var plan = setTimeout(function () { descargar(APK_URL); }, 3000);
+  fetch(SUPABASE_URL + '/rest/v1/app_version?select=*&limit=1', {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+  }).then(function (r) { return r.ok ? r.json() : []; }).then(function (filas) {
+    clearTimeout(plan);
+    var f = filas && filas[0];
+    if (f && f.url_apk_32) document.getElementById('b32').href = directo(f.url_apk_32);
+    descargar((f && f.url_apk) || APK_URL);
+  }).catch(function () { clearTimeout(plan); descargar(APK_URL); });
 </script>
 </body>
 </html>
