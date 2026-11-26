@@ -93,6 +93,24 @@
   .ayuda .cuerpo { padding: 0 16px 14px 16px; color: var(--gris); font-size: 14px; line-height: 1.5; }
   .ayuda .cuerpo b { color: var(--texto); }
   .ayuda .cuerpo a { color: var(--rojo); font-weight: 700; }
+  /* Más apps para descargar */
+  .apps { display: grid; gap: 10px; }
+  .app { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 18px; padding: 14px;
+         scroll-margin-top: 16px; }
+  .app:target { border-color: var(--color-app, var(--rojo)); box-shadow: 0 0 0 2px var(--color-app, var(--rojo)); }
+  .app .cab { display: flex; gap: 14px; align-items: center; }
+  .app .ico { width: 64px; height: 64px; border-radius: 16px; flex: none; overflow: hidden; }
+  .app .ico img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .app .cab b { display: block; font-size: 17px; }
+  .app .cab span { color: var(--gris); font-size: 13.5px; line-height: 1.35; }
+  .app .ver { display: inline-block; margin-top: 4px; font-size: 12px; color: var(--gris);
+              border: 1px solid var(--borde); border-radius: 999px; padding: 2px 8px; }
+  .app ul { margin: 10px 0 0; padding-left: 20px; color: var(--gris); font-size: 13.5px; line-height: 1.5; }
+  .app .bajar { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px;
+                padding: 13px; border-radius: 999px; text-decoration: none; color: #fff;
+                background: var(--color-app, var(--rojo)); font: 700 16px Roboto, sans-serif; }
+  .app .bajar:active { transform: scale(.98); }
+  .app .pie { text-align: center; font-size: 12px; color: var(--gris); margin-top: 8px; }
   @media (max-width: 360px) { .grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -119,6 +137,31 @@
 </header>
 
 <main class="wrap">
+
+  <h2>MÁS APPS PARA DESCARGAR</h2>
+  <div class="apps">
+    <!-- NotasApp: versión y APK se leen solos del último release público
+         (github.com/famimaqux/NotasApp-releases). Para otra app, copia esta
+         tarjeta, cambia id/datos y agrégala en OTRAS_APPS (script de abajo). -->
+    <div class="app" id="notas" style="--color-app:#00897B">
+      <div class="cab">
+        <div class="ico"><img src="icon-notas.png" alt="Ícono de NotasApp"></div>
+        <div>
+          <b>NotasApp</b>
+          <span>Tu buzón personal: guarda links, fotos y textos en un toque.</span><br>
+          <span class="ver" data-version>Versión —</span>
+        </div>
+      </div>
+      <ul>
+        <li>Guarda desde <b>Compartir</b> de cualquier app y clasifícalo.</li>
+        <li>Notas, recordatorios, carpetas privadas y bóveda de claves.</li>
+        <li>Tus datos son solo tuyos (cada persona tiene su espacio).</li>
+      </ul>
+      <a class="bajar" data-descargar href="https://github.com/famimaqux/NotasApp-releases/releases/latest">⬇&nbsp; Descargar NotasApp</a>
+      <div class="pie">Android · se instala igual que AppFMarroquin (pasos de abajo).
+        Es otra app: no reemplaza a AppFMarroquin.</div>
+    </div>
+  </div>
 
   <h2>CÓMO INSTALAR</h2>
   <div class="pasos">
@@ -198,8 +241,8 @@
   // Enlace del APK (Google Drive o el que uses). Si configuras Supabase
   // abajo, se toma automático de la tabla app_version (url_apk).
   // Los instaladores viven en GitHub Releases (siempre la última versión).
-  var APK_URL = 'https://github.com/SIGAMEF/appfmarroquin/releases/latest/download/AppFMarroquin.apk';
-  var APK_URL_32 = 'https://github.com/SIGAMEF/appfmarroquin/releases/latest/download/AppFMarroquin-32bits.apk';
+  var APK_URL = 'https://github.com/Fammarroquin/familiaMU/releases/latest/download/AppFMarroquin.apk';
+  var APK_URL_32 = 'https://github.com/Fammarroquin/familiaMU/releases/latest/download/AppFMarroquin-32bits.apk';
   var VERSION = '';
   // Opcional: leer la última versión de Supabase (anon key = la pública de la app)
   var SUPABASE_URL = 'https://pmfutajljncuhtdlhmdg.supabase.co';
@@ -245,6 +288,26 @@
       aplicar(f.url_apk || APK_URL, v || VERSION, f.url_apk_32 || APK_URL_32);
     }).catch(function () {});
   }
+
+  // ============ MÁS APPS (tarjetas de "Más apps para descargar") ============
+  // Cada una lee su último release público de GitHub y toma el primer .apk.
+  // Si GitHub no responde, el botón queda apuntando a la página del release.
+  var OTRAS_APPS = [
+    { id: 'notas', repo: 'famimaqux/NotasApp-releases' }
+  ];
+  OTRAS_APPS.forEach(function (app) {
+    var card = document.getElementById(app.id);
+    if (!card) return;
+    fetch('https://api.github.com/repos/' + app.repo + '/releases/latest', {
+      headers: { Accept: 'application/vnd.github+json' }
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (rel) {
+      if (!rel) return;
+      var apk = (rel.assets || []).filter(function (a) { return /\.apk$/i.test(a.name); })[0];
+      if (apk) card.querySelector('[data-descargar]').href = apk.browser_download_url;
+      var v = (rel.tag_name || '').replace(/^v/i, '');
+      if (v) card.querySelector('[data-version]').textContent = 'Versión ' + v;
+    }).catch(function () {});
+  });
 
   // Capturas opcionales: captura1.png … captura6.png
   (function () {
